@@ -1,0 +1,471 @@
+import 'dart:convert';
+// import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:diet_app/enums/meals_enum.dart';
+import 'package:diet_app/models/client_model.dart';
+import 'package:diet_app/models/food_model.dart';
+import 'package:diet_app/models/plan_template.dart';
+import 'package:flutter/foundation.dart';
+// import 'package:path_provider/path_provider.dart';
+
+import '../messages.dart';
+
+class DatabaseProvider {
+  static final DatabaseProvider instance = DatabaseProvider();
+  final CollectionReference clientsCollection =
+      Firestore.instance.collection('clients');
+  final CollectionReference foodsCollection =
+      Firestore.instance.collection('foods');
+
+  final String _planTemplatesPath = 'planTemplates';
+  final String _foodsPath = 'foods';
+  final String _propertiesDocument = 'properties';
+  final String _categoryCountField = 'categoryCount';
+  final String _assignedPlanField = 'assignedPlan';
+
+  // String _localPath;
+  // File get _foodsFile {
+  //   return File('$_localPath/foods.json');
+  // }
+
+  List<Food> foods = List<Food>();
+  int foodCategoryCount;
+
+  // void initialize() async {
+  //   final directory = await getApplicationDocumentsDirectory();
+  //   _localPath = directory.path;
+
+  //   await downloadFoods();
+  // }
+
+  Future<bool> addFoods(String clientDocumentID) async {
+    Map<String, dynamic> map = jsonDecode(Food.foodList);
+    List<Map<String, dynamic>> foodsMap =
+        map['foods'].cast<Map<String, dynamic>>();
+
+    CollectionReference foodsCollectionOfClient =
+        getFoodsCollectionOfClient(clientDocumentID);
+    try {
+      foodsMap.forEach((Map<String, dynamic> food) async {
+        var newDoc = foodsCollectionOfClient.document();
+        await newDoc.setData(food);
+      });
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> initializeFoods(String clientDocumentID) async {
+    try {
+      await createFood(
+          clientDocumentID,
+          Food(
+              name: 'New Food',
+              courseLevel: 1,
+              category: 0,
+              parentCategories: List<int>()));
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> createFood(String clientDocumentID, Food newFood) async {
+    try {
+      await Firestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot freshFoodDocSnap = await transaction
+            .get(getFoodsCollectionOfClient(clientDocumentID).document());
+        DocumentSnapshot freshPropertiesSnap = await transaction.get(
+            getFoodsCollectionOfClient(clientDocumentID)
+                .document(_propertiesDocument));
+
+        await transaction.set(freshFoodDocSnap.reference, newFood.toMap());
+
+        int newCategoryCount = ++freshPropertiesSnap.data[_categoryCountField]; // TODO: Fix category count incrementing.
+        await transaction.update(freshPropertiesSnap.reference,
+            {_categoryCountField: newCategoryCount});
+        foodCategoryCount = newCategoryCount;
+      });
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  List<Food> readFoodsLocal(
+      int courseLevel, int parentCategory, Meal selectedMeal) {
+    var query = foods.where((Food food) =>
+        food.courseLevel == courseLevel &&
+        food.parentCategories.contains(parentCategory));
+
+    bool snack = selectedMeal == Meal.Snack1 ||
+        selectedMeal == Meal.Snack2 ||
+        selectedMeal == Meal.Snack3;
+    bool breakfast = selectedMeal == Meal.Breakfast;
+    bool lunch = selectedMeal == Meal.Lunch;
+    bool dinner = selectedMeal == Meal.Dinner;
+
+    if (snack) {
+      query = query.where((Food food) => food.snack);
+    }
+
+    if (breakfast) {
+      query = query.where((Food food) => food.breakfast);
+    }
+
+    if (lunch) {
+      query = query.where((Food food) => food.lunch);
+    }
+
+    if (dinner) {
+      query = query.where((Food food) => food.dinner);
+    }
+
+    return query.toList();
+  }
+
+  Future<bool> updateFood(Food updatedFood,
+      {@required String clientDocumentID,
+      @required String foodToUpdateDocumentID,
+      bool recovery: false}) async {
+    try {
+      await Firestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot freshSnap = await transaction.get(
+            getFoodsCollectionOfClient(clientDocumentID)
+                .document(foodToUpdateDocumentID));
+
+        if (recovery) {
+          DocumentSnapshot freshPropertiesSnap = await transaction.get(
+              getFoodsCollectionOfClient(clientDocumentID)
+                  .document('properties'));
+          transaction.set(freshSnap.reference, updatedFood.toMap());
+
+          int newCategoryCount =
+              ++freshPropertiesSnap.data[_categoryCountField];
+          transaction.update(freshPropertiesSnap.reference,
+              {_categoryCountField: newCategoryCount});
+          foodCategoryCount = newCategoryCount;
+        } else {
+          transaction.update(freshSnap.reference, updatedFood.toMap());
+        }
+      });
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> deleteFood(
+      {@required String clientDocumentID,
+      @required String foodToDeleteDocumentID}) async {
+    try {
+      await Firestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot freshFoodDocSnap = await transaction.get(
+            getFoodsCollectionOfClient(clientDocumentID)
+                .document(foodToDeleteDocumentID));
+        DocumentSnapshot freshPropertiesSnap = await transaction.get(
+            getFoodsCollectionOfClient(clientDocumentID)
+                .document('properties'));
+
+        await transaction.delete(freshFoodDocSnap.reference);
+
+        int newCategoryCount = --freshPropertiesSnap.data[_categoryCountField];
+        transaction.update(freshPropertiesSnap.reference,
+            {_categoryCountField: newCategoryCount});
+        foodCategoryCount = newCategoryCount;
+      });
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  // Future<List<Food>> getFoodsLive(
+  //     int courseLevel, int parentCategory, Meal selectedMeal) async {
+  //   Query query = foodsCollection.where('courseLevel', isEqualTo: courseLevel);
+
+  //   bool snack = selectedMeal == Meal.Snack1 ||
+  //       selectedMeal == Meal.Snack2 ||
+  //       selectedMeal == Meal.Snack3;
+  //   bool breakfast = selectedMeal == Meal.Breakfast;
+  //   bool lunch = selectedMeal == Meal.Lunch;
+  //   bool dinner = selectedMeal == Meal.Dinner;
+
+  //   if (snack) {
+  //     query = query.where('snack', isEqualTo: true);
+  //   }
+
+  //   if (breakfast) {
+  //     query = query.where('breakfast', isEqualTo: true);
+  //   }
+
+  //   if (lunch) {
+  //     query = query.where('lunch', isEqualTo: true);
+  //   }
+
+  //   if (dinner) {
+  //     query = query.where('dinner', isEqualTo: true);
+  //   }
+
+  //   QuerySnapshot querySnap = await query.getDocuments();
+  //   QuerySnapshot parentsQuerySnap = await foodsCollection
+  //       .where('parentCategory', arrayContains: parentCategory)
+  //       .getDocuments();
+
+  //   List<Food> requestedFoods = List<Food>();
+
+  //   parentsQuerySnap.documents.forEach((DocumentSnapshot parentsDocSnap) {
+  //     if (querySnap.documents.firstWhere(
+  //             (docSnap) => docSnap.documentID == parentsDocSnap.documentID,
+  //             orElse: () => null) !=
+  //         null) {
+  //       requestedFoods.add(Food.fromMap(parentsDocSnap.data));
+  //     }
+  //   });
+
+  //   requestedFoods.sort((a, b) => a.category.compareTo(b.category));
+
+  //   return requestedFoods;
+  // }
+
+  // Future<bool> downloadFoods() async {
+  //   try {
+  //     List<Map<String, dynamic>> foodMap = List<Map<String, dynamic>>();
+
+  //     QuerySnapshot querySnap = await foodsCollection.getDocuments();
+  //     querySnap.documents.forEach((docSnap) {
+  //       foodMap.add(docSnap.data);
+  //     });
+
+  //     String foodsJson = jsonEncode(foodMap);
+
+  //     await _foodsFile.writeAsString(foodsJson);
+  //     await loadFoodsFromFile();
+  //     return true;
+  //   } catch (e) {
+  //     return false;
+  //   }
+  // }
+
+  // Future<void> loadFoodsFromFile() async {
+  //   try {
+  //     String foodsJson = await _foodsFile.readAsString();
+
+  //     List<Map<String, dynamic>> foodMaps =
+  //         jsonDecode(foodsJson).cast<Map<String, dynamic>>();
+
+  //     foods = List<Food>();
+  //     foodMaps.forEach((Map<String, dynamic> map) {
+  //       foods.add(Food.fromMap(map));
+  //     });
+  //     debugPrint(
+  //         'Total amount of foods in database: ' + foods.length.toString());
+  //   } on Exception catch (e) {
+  //     debugPrint(e.toString());
+  //   }
+  // }
+
+  Future<bool> loadFoods(String clientDocumentID) async {
+    try {
+      QuerySnapshot querySnap =
+          await getFoodsCollectionOfClient(clientDocumentID).getDocuments();
+
+      foods = querySnap.documents
+          .where((element) => element.documentID != _propertiesDocument)
+          .map((docSnap) =>
+              Food.fromMap(docSnap.data, documentID: docSnap.documentID))
+          .toList();
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> loadFoodCategoryCount(String clientDocumentID) async {
+    try {
+      DocumentSnapshot freshPropertiesSnap =
+          await getFoodsCollectionOfClient(clientDocumentID)
+              .document(_propertiesDocument)
+              .get();
+      foodCategoryCount = freshPropertiesSnap.data[_categoryCountField];
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  CollectionReference getFoodsCollectionOfClient(String clientDocumentID) {
+    return clientsCollection.document(clientDocumentID).collection(_foodsPath);
+  }
+
+  Stream<List<Food>> foodsOfClientStream(String clientDocumentID) {
+    return getFoodsCollectionOfClient(clientDocumentID).snapshots().map(
+        (querySnap) => querySnap.documents
+            .where((element) => element.documentID != _propertiesDocument)
+            .map((docSnap) =>
+                Food.fromMap(docSnap.data, documentID: docSnap.documentID))
+            .toList());
+  }
+
+  // CLIENT CRUD
+
+  Future<bool> createClient(Client newClient) async {
+    try {
+      await Firestore.instance.runTransaction((transaction) async {
+        QuerySnapshot querySnap = await clientsCollection
+            .where('id', isEqualTo: newClient.id)
+            .limit(1)
+            .getDocuments();
+
+        if (querySnap.documents.length > 0) {
+          throw Exception(Messages.clientExists);
+        }
+
+        DocumentSnapshot freshClientSnap =
+            await transaction.get(clientsCollection.document());
+
+        DocumentSnapshot freshClientFoodsPropertiesSnap = await transaction.get(
+            clientsCollection
+                .document(freshClientSnap.documentID)
+                .collection(_foodsPath)
+                .document(_propertiesDocument));
+
+        await transaction.set(freshClientSnap.reference, newClient.toMap());
+        await transaction.set(
+            freshClientFoodsPropertiesSnap.reference, {_categoryCountField: 0});
+      });
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Stream<List<Client>> clientStream() {
+    return clientsCollection.snapshots().map((querySnap) => querySnap.documents
+        .map((docSnap) =>
+            Client.fromMap(docSnap.data, documentID: docSnap.documentID))
+        .toList());
+  }
+
+  // PLAN TEMPLATE CRUD
+
+  Future<bool> createPlanTemplate(String clientDocumentID) async {
+    try {
+      await Firestore.instance.runTransaction((transaction) async {
+        QuerySnapshot querySnap =
+            await getPlanTemplatesCollectionOfClient(clientDocumentID)
+                .getDocuments();
+
+        DocumentSnapshot freshSnap = await transaction.get(
+            getPlanTemplatesCollectionOfClient(clientDocumentID).document());
+
+        await transaction.set(
+            freshSnap.reference,
+            PlanTemplate(
+                    name: 'New Plan ' + querySnap.documents.length.toString())
+                .toMap());
+      });
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updatePlanTemplate(PlanTemplate updatedPlanTemplate,
+      {bool recovery: false}) async {
+    try {
+      await Firestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot freshSnap = await transaction.get(
+            getPlanTemplatesCollectionOfClient(
+                    updatedPlanTemplate.clientDocumentID)
+                .document(updatedPlanTemplate.documentID));
+        if (recovery) {
+          updatedPlanTemplate.assignedPlan = false;
+          await transaction.set(
+              freshSnap.reference, updatedPlanTemplate.toMap());
+        } else {
+          await transaction.update(
+              freshSnap.reference, updatedPlanTemplate.toMap());
+        }
+      });
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> deletePlanTemplate(
+      {@required String clientDocumentID,
+      @required String planTemplateDocumentID}) async {
+    try {
+      await Firestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot freshSnap = await transaction.get(
+            getPlanTemplatesCollectionOfClient(clientDocumentID)
+                .document(planTemplateDocumentID));
+
+        await transaction.delete(freshSnap.reference);
+      });
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> assignPlanTemplate(
+      {@required String clientDocumentID,
+      @required String planTemplateToAssignDocumentID,
+      String planTemplateToUnassignDocumentID: ''}) async {
+    try {
+      await Firestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot planTempToAssignDocSnap = await transaction.get(
+            getPlanTemplatesCollectionOfClient(clientDocumentID)
+                .document(planTemplateToAssignDocumentID));
+
+        if (planTemplateToUnassignDocumentID.isNotEmpty) {
+          DocumentSnapshot planTempToUnassignDocSnap = await transaction.get(
+              getPlanTemplatesCollectionOfClient(clientDocumentID)
+                  .document(planTemplateToUnassignDocumentID));
+          await transaction.update(
+              planTempToUnassignDocSnap.reference, {_assignedPlanField: false});
+        }
+
+        await transaction.update(
+            planTempToAssignDocSnap.reference, {_assignedPlanField: true});
+      });
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Stream<List<PlanTemplate>> planTemplatesOfClientStream(
+      String clientDocumentID) {
+    return getPlanTemplatesCollectionOfClient(clientDocumentID).snapshots().map(
+        (querySnap) => querySnap.documents
+            .map((docSnap) => PlanTemplate.fromMap(docSnap.data,
+                documentID: docSnap.documentID,
+                clientDocumentID: clientDocumentID))
+            .toList());
+  }
+
+  CollectionReference getPlanTemplatesCollectionOfClient(
+      String clientDocumentID) {
+    return clientsCollection
+        .document(clientDocumentID)
+        .collection(_planTemplatesPath);
+  }
+}

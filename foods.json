@@ -1,0 +1,249 @@
+{
+    "foods": [
+        {
+            "name": "Köfteler",
+            "courseLevel": 1,
+            "category": 1,
+            "parentCategory": [
+                0
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Et Yemekleri",
+            "courseLevel": 1,
+            "category": 1,
+            "parentCategory": [
+                0
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Tavuk Yemekleri",
+            "courseLevel": 1,
+            "category": 1,
+            "parentCategory": [
+                0
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Kuru Baklagiller",
+            "courseLevel": 1,
+            "category": 1,
+            "parentCategory": [
+                0
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Zeytinyağlı Sebzeler",
+            "courseLevel": 2,
+            "category": 2,
+            "parentCategory": [
+                1
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Çiğ Sebzeler",
+            "courseLevel": 2,
+            "category": 2,
+            "parentCategory": [
+                1
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Sebze Salataları",
+            "courseLevel": 2,
+            "category": 2,
+            "parentCategory": [
+                1
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Ekmek",
+            "courseLevel": 3,
+            "category": 3,
+            "parentCategory": [
+                2
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Sütlü Tatlılar",
+            "courseLevel": 3,
+            "category": 4,
+            "parentCategory": [
+                2,
+                8
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Sütsüz Tatlılar",
+            "courseLevel": 3,
+            "category": 4,
+            "parentCategory": [
+                2,
+                8
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Pastalar",
+            "courseLevel": 3,
+            "category": 4,
+            "parentCategory": [
+                2,
+                8
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Hamurişi Tatlılar",
+            "courseLevel": 3,
+            "category": 4,
+            "parentCategory": [
+                2,
+                8
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Makarna",
+            "courseLevel": 2,
+            "category": 5,
+            "parentCategory": [
+                1
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Pilav",
+            "courseLevel": 2,
+            "category": 5,
+            "parentCategory": [
+                1
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Nişastalı Sebzeler",
+            "courseLevel": 2,
+            "category": 5,
+            "parentCategory": [
+                1
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Zeytinyağlı Dolmalar, Sarmalar",
+            "courseLevel": 2,
+            "category": 5,
+            "parentCategory": [
+                1
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Komposto, Hoşaf",
+            "courseLevel": 3,
+            "category": 6,
+            "parentCategory": [
+                5
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Yoğurt",
+            "courseLevel": 3,
+            "category": 7,
+            "parentCategory": [
+                5,
+                8
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Etsiz Çorba",
+            "courseLevel": 2,
+            "category": 8,
+            "parentCategory": [
+                1
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Meyve",
+            "courseLevel": 2,
+            "category": 10,
+            "parentCategory": [
+                8
+            ],
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        }
+    ]
+}
