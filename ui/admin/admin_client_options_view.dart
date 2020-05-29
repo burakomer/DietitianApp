@@ -1,5 +1,6 @@
 import 'package:diet_app/messages.dart';
 import 'package:diet_app/models/client_model.dart';
+import 'package:diet_app/models/food_category_model.dart';
 import 'package:diet_app/models/food_model.dart';
 import 'package:diet_app/models/plan_template.dart';
 import 'package:diet_app/providers/database_provider.dart';
@@ -39,6 +40,7 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
   final planPopupMenu = {'Assign', 'Delete'};
 
   final foodPopupMenu = {'Move', 'Delete'};
+  final foodAddPopupMenu = {'Add Food', 'Add Food as Child'};
 
   Client client;
   PlanTemplate assignedPlan;
@@ -46,6 +48,12 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
   bool isFirstLoad = true;
   bool isCreatingPlan = false;
   bool isLoadingFoods = false;
+
+  bool isMovingFood = false;
+  Food foodToMove;
+
+  bool isDeletingFood = false;
+  Food deletedFoodBeforeDestroyed;
 
   bool isDeletingPlan = false;
   PlanTemplate deletedPlanBeforeDestroyed;
@@ -74,11 +82,24 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                       ));
                     }
                     break;
+                  case 'Load Sample Data':
+                    bool success = await DatabaseProvider.instance
+                        .addFoods(client.documentID);
+
+                    if (!success) {
+                      Scaffold.of(context).showSnackBar(SnackBar(
+                        content: SnackbarContent(
+                            icon: Icons.error,
+                            title: Messages.foodsInitializeFailure),
+                      ));
+                    }
+                    break;
                   default:
                 }
               },
               itemBuilder: (BuildContext context) {
-                return <String>['Initialize'].map((String choice) {
+                return <String>['Initialize', 'Load Sample Data']
+                    .map((String choice) {
                   return PopupMenuItem<String>(
                     value: choice,
                     child: Text(choice),
@@ -105,19 +126,7 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
       floatingActionButton: getFAB(context),
       body: TabBarView(
         controller: _tabController,
-        children: <Widget>[
-          getPlansTabView(context),
-          FutureBuilder<Widget>(
-            future: getFoodsTabView(context),
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (!snapshot.hasData) {
-                return Center(child: CircularProgressIndicator());
-              } else {
-                return snapshot.data;
-              }
-            },
-          ),
-        ],
+        children: <Widget>[getPlansTabView(context), getFoodsTabView(context)],
       ),
     );
   }
@@ -321,8 +330,8 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                                     duration: Duration(seconds: 6),
                                     content: SnackbarContent(
                                       icon: Icons.delete_forever,
-                                      title: deletedPlanBeforeDestroyed.name +
-                                          ' deleted.',
+                                      title: Messages.deletedMessage(
+                                          deletedPlanBeforeDestroyed.name),
                                     ),
                                     action: SnackBarAction(
                                       label: 'Undo',
@@ -372,18 +381,7 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
     );
   }
 
-  Future<Widget> getFoodsTabView(BuildContext context) async {
-    if (isFirstLoad) {
-      bool success = await DatabaseProvider.instance
-          .loadFoodCategoryCount(client.documentID);
-
-      if (!success) {
-        return Center(
-          child: Text(Messages.clientFoodCategoryLoadFailure),
-        );
-      }
-    }
-
+  Widget getFoodsTabView(BuildContext context) {
     return StreamBuilder(
       stream: DatabaseProvider.instance.foodsOfClientStream(client.documentID),
       builder: (BuildContext context, AsyncSnapshot<List<Food>> snapshot) {
@@ -391,68 +389,159 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
           return Center(child: CircularProgressIndicator());
         } else {
           /* Before building the list, create a new list that groups foods according to their categories. */
-          List<List<Food>> foodCategories =
-              new List<List<Food>>(DatabaseProvider.instance.foodCategoryCount);
+          List<FoodCategory> foodCategories = new List<FoodCategory>();
 
-          for (var i = 0;
-              i < DatabaseProvider.instance.foodCategoryCount;
-              i++) {
-            foodCategories[i] =
-                snapshot.data.where((Food food) => food.category == i).toList();
-          }
+          /* First, sort the list accourding to category indexes, so that the next process works correctly. */
+          snapshot.data.sort((a, b) => a.category.compareTo(b.category));
+
+          snapshot.data.forEach((Food food) {
+            if (foodCategories.length < food.category) {
+              /* If the category doesn't exist in the list */
+              List<Food> foods = <Food>[food];
+
+              foodCategories.add(FoodCategory(foods,
+                  category: food.category,
+                  parentCategory: food.parentCategory));
+            } else {
+              /* Meaning that the category is already created */
+              foodCategories[food.category - 1].foods.add(food);
+            }
+          });
 
           /* Then, sort them according to their category and parent category. (Childs come after the parent.) */
-          foodCategories.sort((a, b) => a[0].compareRelationship(b[0]));
+          foodCategories
+              .sort((a, b) => a.compareRelationship(b.parentCategory));
 
           return ListView.builder(
             itemCount: foodCategories.length,
             itemBuilder: (BuildContext context, int index) {
               return Container(
-                padding: EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Flexible(
-                      child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: foodCategories[index]
-                              .map((Food food) => ListTile(
-                                    /* Indentation depending on the course level. */
-                                    leading: getFoodIndentation(
-                                        foodCategories[index][0].courseLevel),
-                                    title: Text(food.name),
-                                    trailing: PopupMenuButton(
-                                      itemBuilder: (BuildContext context) {
-                                        return foodPopupMenu
-                                            .map((String choice) {
-                                          return PopupMenuItem<String>(
-                                            value: choice,
-                                            child: Text(choice),
-                                          );
-                                        }).toList();
-                                      },
-                                      onSelected: (String value) async {
-                                        switch (value) {
-                                          case 'Move':
-                                            // TODO: Update the foods category and parent category.
-                                            break;
-                                          case 'Delete':
-                                            // TODO: Delete the food. Very easy.
-                                            break;
-                                          default:
-                                        }
-                                      },
-                                    ),
-                                  ))
-                              .toList()),
-                    ),
-                    Center(
-                        child: IconButton(
-                      icon: Icon(Icons.add),
-                      onPressed:
-                          () {}, // TODO: Add to food category => foodCategories[index][0].category (Show dialog box)
-                    ))
-                  ],
+                padding: EdgeInsets.fromLTRB(
+                    4 +
+                        getFoodIndentation(
+                            foodCategories[index].foods[0].courseLevel),
+                    2,
+                    4,
+                    2),
+                child: Card(
+                  elevation: getFoodCategoryElevation(
+                      foodCategories[index].foods[0].courseLevel),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Flexible(
+                        child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: foodCategories[index]
+                                .foods
+                                .map((Food food) => ListTile(
+                                      /* Indentation depending on the course level. */
+                                      title: Text(foodCategories[index]
+                                              .foods[0]
+                                              .courseLevel
+                                              .toString() +
+                                          '. ' +
+                                          food.name),
+                                      onTap: !isMovingFood
+                                          ? null
+                                          : () async {
+                                              // TODO : Handle moving here.
+                                            },
+                                      trailing: PopupMenuButton(
+                                        itemBuilder: (BuildContext context) {
+                                          return foodPopupMenu
+                                              .map((String choice) {
+                                            return PopupMenuItem<String>(
+                                              value: choice,
+                                              child: Text(choice),
+                                            );
+                                          }).toList();
+                                        },
+                                        onSelected: (String value) async {
+                                          switch (value) {
+                                            case 'Move':
+                                              // TODO: Update the foods category and parent category.
+                                              break;
+                                            case 'Delete':
+                                              setState(() {
+                                                deletedFoodBeforeDestroyed =
+                                                    food;
+                                              });
+
+                                              bool success =
+                                                  await DatabaseProvider
+                                                      .instance
+                                                      .deleteFood(
+                                                          clientDocumentID:
+                                                              client.documentID,
+                                                          foodToDeleteDocumentID:
+                                                              food.documentID);
+                                              if (success) {
+                                                Scaffold.of(context)
+                                                    .showSnackBar(SnackBar(
+                                                  duration:
+                                                      Duration(seconds: 6),
+                                                  content: SnackbarContent(
+                                                    icon: Icons.delete_forever,
+                                                    title: Messages.deletedMessage(
+                                                        deletedFoodBeforeDestroyed
+                                                            .name),
+                                                  ),
+                                                  action: SnackBarAction(
+                                                    label: 'Undo',
+                                                    onPressed: () async {
+                                                      await DatabaseProvider
+                                                          .instance
+                                                          .updateFood(
+                                                              deletedFoodBeforeDestroyed,
+                                                              clientDocumentID:
+                                                                  client
+                                                                      .documentID,
+                                                              recovery: true);
+                                                      setState(() {
+                                                        deletedFoodBeforeDestroyed =
+                                                            null;
+                                                      });
+                                                    },
+                                                  ),
+                                                ));
+                                              } else {
+                                                Scaffold.of(context)
+                                                    .showSnackBar(SnackBar(
+                                                        content:
+                                                            SnackbarContent(
+                                                  icon: Icons.delete_forever,
+                                                  title: Messages
+                                                      .foodDeleteFailure,
+                                                )));
+                                                setState(() {
+                                                  deletedFoodBeforeDestroyed =
+                                                      null;
+                                                });
+                                              }
+                                              break;
+                                            default:
+                                          }
+                                        },
+                                      ),
+                                    ))
+                                .toList()),
+                      ),
+                      Center(
+                        // TODO: Add to food category => foodCategories[index][0].category (Show dialog box)
+                        child: PopupMenuButton(
+                          itemBuilder: (BuildContext context) {
+                            return foodAddPopupMenu.map((String choice) {
+                              return PopupMenuItem<String>(
+                                value: choice,
+                                child: Text(choice),
+                              );
+                            }).toList();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -462,26 +551,39 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
     );
   }
 
-  Widget getFoodIndentation(int courseLevel) {
-    // switch (courseLevel) {
-    //   case 1:
-    //     return null;
-    //   case 2:
-    //     return SizedBox();
-    //   case 3:
-    //     return SizedBox(width: 54,);
-    //   default:
-    //     return null;
-    // }
-    return SizedBox(
-      width: 32,
-      child: Center(
-        child: Text(
-          courseLevel.toString() + '.',
-          style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w900),
-        ),
-      ),
-    );
+  double getFoodIndentation(int courseLevel) {
+    switch (courseLevel) {
+      case 1:
+        return 0.0;
+      case 2:
+        return 16.0;
+      case 3:
+        return 32.0;
+      default:
+        return 0.0;
+    }
+    // return SizedBox(
+    //   width: 32,
+    //   child: Center(
+    //     child: Text(
+    //       courseLevel.toString() + '.',
+    //       style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w900),
+    //     ),
+    //   ),
+    // );
+  }
+
+  double getFoodCategoryElevation(int courseLevel) {
+    switch (courseLevel) {
+      case 1:
+        return 18.0;
+      case 2:
+        return 6.0;
+      case 3:
+        return 2.0;
+      default:
+        return 0.0;
+    }
   }
 
   Widget getFAB(BuildContext context) {

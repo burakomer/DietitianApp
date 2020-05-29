@@ -6,7 +6,7 @@ class Food {
   String name;
   int courseLevel;
   int category;
-  List<int> parentCategories;
+  int parentCategory;
 
   bool snack;
   bool breakfast;
@@ -17,7 +17,7 @@ class Food {
       {@required this.name,
       @required this.courseLevel,
       @required this.category,
-      @required this.parentCategories,
+      @required this.parentCategory,
       this.snack: false,
       this.breakfast: false,
       this.lunch: false,
@@ -27,7 +27,7 @@ class Food {
       : this.name = map['name'],
         this.courseLevel = map['courseLevel'],
         this.category = map['category'],
-        this.parentCategories = map['parentCategory'].cast<int>(),
+        this.parentCategory = map['parentCategory'],
         this.snack = map['snack'],
         this.breakfast = map['breakfast'],
         this.lunch = map['lunch'],
@@ -39,7 +39,7 @@ class Food {
       'name': name,
       'courseLevel': courseLevel,
       'category': category,
-      'parentCategory': parentCategories,
+      'parentCategory': parentCategory,
       'snack': snack,
       'breakfast': breakfast,
       'lunch': lunch,
@@ -47,14 +47,7 @@ class Food {
     };
   }
 
-  int compareRelationship(Food other) {
-    if (other.parentCategories.contains(category)) {
-      return -1;
-    }
-    else {
-      return 0;
-    }
-  }
+  
 
   bool operator ==(dynamic other) =>
       other != null && other is Food && this.name == other.name;
@@ -68,9 +61,7 @@ class Food {
             "name": "Köfteler",
             "courseLevel": 1,
             "category": 1,
-            "parentCategory": [
-                0
-            ],
+            "parentCategory": 0,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -80,9 +71,7 @@ class Food {
             "name": "Et Yemekleri",
             "courseLevel": 1,
             "category": 1,
-            "parentCategory": [
-                0
-            ],
+            "parentCategory": 0,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -92,9 +81,7 @@ class Food {
             "name": "Tavuk Yemekleri",
             "courseLevel": 1,
             "category": 1,
-            "parentCategory": [
-                0
-            ],
+            "parentCategory": 0,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -104,9 +91,7 @@ class Food {
             "name": "Kuru Baklagiller",
             "courseLevel": 1,
             "category": 1,
-            "parentCategory": [
-                0
-            ],
+            "parentCategory": 0,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -116,9 +101,7 @@ class Food {
             "name": "Zeytinyağlı Sebzeler",
             "courseLevel": 2,
             "category": 2,
-            "parentCategory": [
-                1
-            ],
+            "parentCategory": 1,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -128,9 +111,7 @@ class Food {
             "name": "Çiğ Sebzeler",
             "courseLevel": 2,
             "category": 2,
-            "parentCategory": [
-                1
-            ],
+            "parentCategory": 1,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -140,9 +121,7 @@ class Food {
             "name": "Sebze Salataları",
             "courseLevel": 2,
             "category": 2,
-            "parentCategory": [
-                1
-            ],
+            "parentCategory": 1,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -152,9 +131,7 @@ class Food {
             "name": "Ekmek",
             "courseLevel": 3,
             "category": 3,
-            "parentCategory": [
-                2
-            ],
+            "parentCategory": 2,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -164,10 +141,7 @@ class Food {
             "name": "Sütlü Tatlılar",
             "courseLevel": 3,
             "category": 4,
-            "parentCategory": [
-                2,
-                8
-            ],
+            "parentCategory": 2,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -177,10 +151,7 @@ class Food {
             "name": "Sütsüz Tatlılar",
             "courseLevel": 3,
             "category": 4,
-            "parentCategory": [
-                2,
-                8
-            ],
+            "parentCategory": 2,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -190,10 +161,7 @@ class Food {
             "name": "Pastalar",
             "courseLevel": 3,
             "category": 4,
-            "parentCategory": [
-                2,
-                8
-            ],
+            "parentCategory": 2,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -203,10 +171,7 @@ class Food {
             "name": "Hamurişi Tatlılar",
             "courseLevel": 3,
             "category": 4,
-            "parentCategory": [
-                2,
-                8
-            ],
+            "parentCategory": 2,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -216,9 +181,7 @@ class Food {
             "name": "Makarna",
             "courseLevel": 2,
             "category": 5,
-            "parentCategory": [
-                1
-            ],
+            "parentCategory": 1,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -228,9 +191,7 @@ class Food {
             "name": "Pilav",
             "courseLevel": 2,
             "category": 5,
-            "parentCategory": [
-                1
-            ],
+            "parentCategory": 1,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -240,9 +201,7 @@ class Food {
             "name": "Nişastalı Sebzeler",
             "courseLevel": 2,
             "category": 5,
-            "parentCategory": [
-                1
-            ],
+            "parentCategory": 1,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -252,9 +211,7 @@ class Food {
             "name": "Zeytinyağlı Dolmalar, Sarmalar",
             "courseLevel": 2,
             "category": 5,
-            "parentCategory": [
-                1
-            ],
+            "parentCategory": 1,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -264,9 +221,7 @@ class Food {
             "name": "Komposto, Hoşaf",
             "courseLevel": 3,
             "category": 6,
-            "parentCategory": [
-                5
-            ],
+            "parentCategory": 5,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -276,10 +231,7 @@ class Food {
             "name": "Yoğurt",
             "courseLevel": 3,
             "category": 7,
-            "parentCategory": [
-                5,
-                8
-            ],
+            "parentCategory": 5,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -289,9 +241,17 @@ class Food {
             "name": "Etsiz Çorba",
             "courseLevel": 2,
             "category": 8,
-            "parentCategory": [
-                1
-            ],
+            "parentCategory": 1,
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Ekmek",
+            "courseLevel": 3,
+            "category": 9,
+            "parentCategory": 8,
             "snack": false,
             "breakfast": false,
             "lunch": true,
@@ -299,11 +259,59 @@ class Food {
         },
         {
             "name": "Meyve",
-            "courseLevel": 2,
+            "courseLevel": 3,
             "category": 10,
-            "parentCategory": [
-                8
-            ],
+            "parentCategory": 8,
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Yoğurt",
+            "courseLevel": 3,
+            "category": 11,
+            "parentCategory": 8,
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Sütlü Tatlılar",
+            "courseLevel": 3,
+            "category": 12,
+            "parentCategory": 8,
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Sütsüz Tatlılar",
+            "courseLevel": 3,
+            "category": 12,
+            "parentCategory": 8,
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Pastalar",
+            "courseLevel": 3,
+            "category": 12,
+            "parentCategory": 8,
+            "snack": false,
+            "breakfast": false,
+            "lunch": true,
+            "dinner": true
+        },
+        {
+            "name": "Hamurişi Tatlılar",
+            "courseLevel": 3,
+            "category": 12,
+            "parentCategory": 8,
             "snack": false,
             "breakfast": false,
             "lunch": true,

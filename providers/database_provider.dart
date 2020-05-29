@@ -20,8 +20,6 @@ class DatabaseProvider {
 
   final String _planTemplatesPath = 'planTemplates';
   final String _foodsPath = 'foods';
-  final String _propertiesDocument = 'properties';
-  final String _categoryCountField = 'categoryCount';
   final String _assignedPlanField = 'assignedPlan';
 
   // String _localPath;
@@ -30,7 +28,6 @@ class DatabaseProvider {
   // }
 
   List<Food> foods = List<Food>();
-  int foodCategoryCount;
 
   // void initialize() async {
   //   final directory = await getApplicationDocumentsDirectory();
@@ -65,8 +62,8 @@ class DatabaseProvider {
           Food(
               name: 'New Food',
               courseLevel: 1,
-              category: 0,
-              parentCategories: List<int>()));
+              category: 1,
+              parentCategory: 0));
       return true;
     } on Exception catch (e) {
       debugPrint(e.toString());
@@ -79,16 +76,8 @@ class DatabaseProvider {
       await Firestore.instance.runTransaction((transaction) async {
         DocumentSnapshot freshFoodDocSnap = await transaction
             .get(getFoodsCollectionOfClient(clientDocumentID).document());
-        DocumentSnapshot freshPropertiesSnap = await transaction.get(
-            getFoodsCollectionOfClient(clientDocumentID)
-                .document(_propertiesDocument));
-
+        
         await transaction.set(freshFoodDocSnap.reference, newFood.toMap());
-
-        int newCategoryCount = ++freshPropertiesSnap.data[_categoryCountField]; // TODO: Fix category count incrementing.
-        await transaction.update(freshPropertiesSnap.reference,
-            {_categoryCountField: newCategoryCount});
-        foodCategoryCount = newCategoryCount;
       });
       return true;
     } on Exception catch (e) {
@@ -101,7 +90,7 @@ class DatabaseProvider {
       int courseLevel, int parentCategory, Meal selectedMeal) {
     var query = foods.where((Food food) =>
         food.courseLevel == courseLevel &&
-        food.parentCategories.contains(parentCategory));
+        food.parentCategory == parentCategory);
 
     bool snack = selectedMeal == Meal.Snack1 ||
         selectedMeal == Meal.Snack2 ||
@@ -131,25 +120,15 @@ class DatabaseProvider {
 
   Future<bool> updateFood(Food updatedFood,
       {@required String clientDocumentID,
-      @required String foodToUpdateDocumentID,
       bool recovery: false}) async {
     try {
       await Firestore.instance.runTransaction((transaction) async {
         DocumentSnapshot freshSnap = await transaction.get(
             getFoodsCollectionOfClient(clientDocumentID)
-                .document(foodToUpdateDocumentID));
+                .document(updatedFood.documentID));
 
         if (recovery) {
-          DocumentSnapshot freshPropertiesSnap = await transaction.get(
-              getFoodsCollectionOfClient(clientDocumentID)
-                  .document('properties'));
           transaction.set(freshSnap.reference, updatedFood.toMap());
-
-          int newCategoryCount =
-              ++freshPropertiesSnap.data[_categoryCountField];
-          transaction.update(freshPropertiesSnap.reference,
-              {_categoryCountField: newCategoryCount});
-          foodCategoryCount = newCategoryCount;
         } else {
           transaction.update(freshSnap.reference, updatedFood.toMap());
         }
@@ -169,16 +148,8 @@ class DatabaseProvider {
         DocumentSnapshot freshFoodDocSnap = await transaction.get(
             getFoodsCollectionOfClient(clientDocumentID)
                 .document(foodToDeleteDocumentID));
-        DocumentSnapshot freshPropertiesSnap = await transaction.get(
-            getFoodsCollectionOfClient(clientDocumentID)
-                .document('properties'));
 
         await transaction.delete(freshFoodDocSnap.reference);
-
-        int newCategoryCount = --freshPropertiesSnap.data[_categoryCountField];
-        transaction.update(freshPropertiesSnap.reference,
-            {_categoryCountField: newCategoryCount});
-        foodCategoryCount = newCategoryCount;
       });
       return true;
     } on Exception catch (e) {
@@ -278,24 +249,9 @@ class DatabaseProvider {
           await getFoodsCollectionOfClient(clientDocumentID).getDocuments();
 
       foods = querySnap.documents
-          .where((element) => element.documentID != _propertiesDocument)
           .map((docSnap) =>
               Food.fromMap(docSnap.data, documentID: docSnap.documentID))
           .toList();
-      return true;
-    } on Exception catch (e) {
-      debugPrint(e.toString());
-      return false;
-    }
-  }
-
-  Future<bool> loadFoodCategoryCount(String clientDocumentID) async {
-    try {
-      DocumentSnapshot freshPropertiesSnap =
-          await getFoodsCollectionOfClient(clientDocumentID)
-              .document(_propertiesDocument)
-              .get();
-      foodCategoryCount = freshPropertiesSnap.data[_categoryCountField];
       return true;
     } on Exception catch (e) {
       debugPrint(e.toString());
@@ -310,7 +266,6 @@ class DatabaseProvider {
   Stream<List<Food>> foodsOfClientStream(String clientDocumentID) {
     return getFoodsCollectionOfClient(clientDocumentID).snapshots().map(
         (querySnap) => querySnap.documents
-            .where((element) => element.documentID != _propertiesDocument)
             .map((docSnap) =>
                 Food.fromMap(docSnap.data, documentID: docSnap.documentID))
             .toList());
@@ -333,15 +288,7 @@ class DatabaseProvider {
         DocumentSnapshot freshClientSnap =
             await transaction.get(clientsCollection.document());
 
-        DocumentSnapshot freshClientFoodsPropertiesSnap = await transaction.get(
-            clientsCollection
-                .document(freshClientSnap.documentID)
-                .collection(_foodsPath)
-                .document(_propertiesDocument));
-
         await transaction.set(freshClientSnap.reference, newClient.toMap());
-        await transaction.set(
-            freshClientFoodsPropertiesSnap.reference, {_categoryCountField: 0});
       });
       return true;
     } on Exception catch (e) {

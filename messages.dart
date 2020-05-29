@@ -23,6 +23,12 @@ class Messages {
   static const String foodsLoadFailure = "Error on loading foods.";
   static const String foodsInitializeFailure = 'Error on initializing food.';
 
+  static const String foodDeleteFailure = "Error on deleting food.";
+
   static const String clientExists = "Client already exists!";
   static const String clientFoodCategoryLoadFailure = "Error on loading food categories.";
+
+  static String deletedMessage(String objectName) {
+    return objectName + ' deleted.';
+  }
 }

@@ -183,7 +183,7 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView> {
         courseList: course1, onSelectedCourseChanged: (value) {
       setState(() {
         if (selectedFood2 != null) {
-          if (!selectedFood2.parentCategories.contains(value.category)) {
+          if (selectedFood2.parentCategory !=value.category) {
             selectedFood2 = null;
           }
         }
@@ -210,7 +210,7 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView> {
           courseList: course2, onSelectedCourseChanged: (value) {
         setState(() {
           if (selectedFood3 != null) {
-            if (!selectedFood3.parentCategories.contains(value.category)) {
+            if (selectedFood3.parentCategory!=value.category) {
               selectedFood3 = null;
             }
           }
