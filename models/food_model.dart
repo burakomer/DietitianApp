@@ -7,6 +7,8 @@ class Food {
   int courseLevel;
   int category;
   int parentCategory;
+  int dailyLimit;
+  int weeklyLimit;
 
   bool snack;
   bool breakfast;
@@ -18,6 +20,8 @@ class Food {
       @required this.courseLevel,
       @required this.category,
       @required this.parentCategory,
+      @required this.dailyLimit,
+      @required this.weeklyLimit,
       this.snack: false,
       this.breakfast: false,
       this.lunch: false,
@@ -32,6 +36,8 @@ class Food {
         this.breakfast = map['breakfast'],
         this.lunch = map['lunch'],
         this.dinner = map['dinner'],
+        this.dailyLimit = map['dailyLimit'],
+        this.weeklyLimit = map['weeklyLimit'],
         this.documentID = documentID;
 
   Map<String, dynamic> toMap() {
@@ -40,6 +46,8 @@ class Food {
       'courseLevel': courseLevel,
       'category': category,
       'parentCategory': parentCategory,
+      'dailyLimit': dailyLimit,
+      'weeklyLimit': weeklyLimit,
       'snack': snack,
       'breakfast': breakfast,
       'lunch': lunch,
@@ -65,7 +73,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Et Yemekleri",
@@ -75,7 +85,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Tavuk Yemekleri",
@@ -85,7 +97,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Kuru Baklagiller",
@@ -95,7 +109,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Zeytinyağlı Sebzeler",
@@ -105,7 +121,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Çiğ Sebzeler",
@@ -115,7 +133,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Sebze Salataları",
@@ -125,7 +145,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Ekmek",
@@ -135,7 +157,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Sütlü Tatlılar",
@@ -145,7 +169,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Sütsüz Tatlılar",
@@ -155,7 +181,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Pastalar",
@@ -165,7 +193,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Hamurişi Tatlılar",
@@ -175,7 +205,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Makarna",
@@ -185,7 +217,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Pilav",
@@ -195,7 +229,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Nişastalı Sebzeler",
@@ -205,7 +241,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Zeytinyağlı Dolmalar, Sarmalar",
@@ -215,7 +253,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Komposto, Hoşaf",
@@ -225,7 +265,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Yoğurt",
@@ -235,7 +277,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Etsiz Çorba",
@@ -245,7 +289,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Ekmek",
@@ -255,7 +301,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Meyve",
@@ -265,7 +313,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Yoğurt",
@@ -275,7 +325,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Sütlü Tatlılar",
@@ -285,7 +337,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Sütsüz Tatlılar",
@@ -295,7 +349,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Pastalar",
@@ -305,7 +361,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         },
         {
             "name": "Hamurişi Tatlılar",
@@ -315,7 +373,9 @@ class Food {
             "snack": false,
             "breakfast": false,
             "lunch": true,
-            "dinner": true
+            "dinner": true,
+            "dailyLimit": 1,
+            "weeklyLimit": 1
         }
     ]
 }''';

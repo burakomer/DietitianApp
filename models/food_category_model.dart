@@ -5,14 +5,19 @@ class FoodCategory {
   List<Food> foods;
   int category;
   int parentCategory;
+  int courseLevel;
 
-  FoodCategory(this.foods, {@required category, @required parentCategory,});
+  FoodCategory(
+    this.foods, {
+    @required this.category,
+    @required this.parentCategory,
+    @required this.courseLevel,
+  });
 
   int compareRelationship(int otherParentCategory) {
     if (otherParentCategory == category) {
       return -1;
-    }
-    else {
+    } else {
       return 0;
     }
   }

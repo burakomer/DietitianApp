@@ -6,6 +6,7 @@ import 'package:diet_app/models/plan_template.dart';
 import 'package:diet_app/providers/database_provider.dart';
 import 'package:diet_app/ui/widgets/snackbar_content.dart';
 import 'package:flutter/material.dart';
+import 'package:string_validator/string_validator.dart';
 
 class AdminClientOptionsView extends StatefulWidget {
   AdminClientOptionsView({Key key}) : super(key: key);
@@ -39,7 +40,12 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
   final assignedPlanPopupMenu = {'Delete'};
   final planPopupMenu = {'Assign', 'Delete'};
 
-  final foodPopupMenu = {'Move', 'Delete'};
+  final foodPopupMenu = {
+    'Change Name',
+    'Change Daily Limit',
+    'Change Weekly Limit',
+    'Delete'
+  };
   final foodAddPopupMenu = {'Add Food', 'Add Food as Child'};
 
   Client client;
@@ -401,7 +407,8 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
 
               foodCategories.add(FoodCategory(foods,
                   category: food.category,
-                  parentCategory: food.parentCategory));
+                  parentCategory: food.parentCategory,
+                  courseLevel: food.courseLevel));
             } else {
               /* Meaning that the category is already created */
               foodCategories[food.category - 1].foods.add(food);
@@ -442,11 +449,8 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                                               .toString() +
                                           '. ' +
                                           food.name),
-                                      onTap: !isMovingFood
-                                          ? null
-                                          : () async {
-                                              // TODO : Handle moving here.
-                                            },
+                                      subtitle: Text(
+                                          'DLimit: ${food.dailyLimit} | WLimit: ${food.weeklyLimit}'),
                                       trailing: PopupMenuButton(
                                         itemBuilder: (BuildContext context) {
                                           return foodPopupMenu
@@ -459,8 +463,90 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                                         },
                                         onSelected: (String value) async {
                                           switch (value) {
-                                            case 'Move':
-                                              // TODO: Update the foods category and parent category.
+                                            case 'Change Name':
+                                              String newName =
+                                                  await changeFoodNameDialog(
+                                                      context);
+                                              if (newName.isNotEmpty) {
+                                                Food updatedFood = food;
+                                                updatedFood.name = newName;
+                                                bool success =
+                                                    await DatabaseProvider
+                                                        .instance
+                                                        .updateFood(updatedFood,
+                                                            clientDocumentID:
+                                                                client
+                                                                    .documentID);
+
+                                                if (!success) {
+                                                  Scaffold.of(context)
+                                                      .showSnackBar(SnackBar(
+                                                          content:
+                                                              SnackbarContent(
+                                                    icon: Icons.error,
+                                                    title: Messages
+                                                        .foodUpdateFailure,
+                                                  )));
+                                                }
+                                              }
+                                              break;
+                                            case 'Change Daily Limit':
+                                              String newDailyLimit =
+                                                  await changeFoodDailyWeeklyLimitDialog(
+                                                      context,
+                                                      title: 'Daily');
+                                              if (newDailyLimit.isNotEmpty) {
+                                                Food updatedFood = food;
+                                                updatedFood.dailyLimit =
+                                                    int.parse(newDailyLimit);
+                                                bool success =
+                                                    await DatabaseProvider
+                                                        .instance
+                                                        .updateFood(updatedFood,
+                                                            clientDocumentID:
+                                                                client
+                                                                    .documentID);
+
+                                                if (!success) {
+                                                  Scaffold.of(context)
+                                                      .showSnackBar(SnackBar(
+                                                          content:
+                                                              SnackbarContent(
+                                                    icon: Icons.error,
+                                                    title: Messages
+                                                        .foodUpdateFailure,
+                                                  )));
+                                                }
+                                              }
+                                              break;
+                                            case 'Change Weekly Limit':
+                                              String newWeeklyLimit =
+                                                  await changeFoodDailyWeeklyLimitDialog(
+                                                      context,
+                                                      title: 'Weekly');
+                                              if (newWeeklyLimit.isNotEmpty) {
+                                                Food updatedFood = food;
+                                                updatedFood.weeklyLimit =
+                                                    int.parse(newWeeklyLimit);
+                                                bool success =
+                                                    await DatabaseProvider
+                                                        .instance
+                                                        .updateFood(updatedFood,
+                                                            clientDocumentID:
+                                                                client
+                                                                    .documentID);
+
+                                                if (!success) {
+                                                  Scaffold.of(context)
+                                                      .showSnackBar(SnackBar(
+                                                          content:
+                                                              SnackbarContent(
+                                                    icon: Icons.error,
+                                                    title: Messages
+                                                        .foodUpdateFailure,
+                                                  )));
+                                                }
+                                              }
                                               break;
                                             case 'Delete':
                                               setState(() {
@@ -510,7 +596,7 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                                                     .showSnackBar(SnackBar(
                                                         content:
                                                             SnackbarContent(
-                                                  icon: Icons.delete_forever,
+                                                  icon: Icons.error,
                                                   title: Messages
                                                       .foodDeleteFailure,
                                                 )));
@@ -528,15 +614,72 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                                 .toList()),
                       ),
                       Center(
-                        // TODO: Add to food category => foodCategories[index][0].category (Show dialog box)
                         child: PopupMenuButton(
+                          icon: Icon(Icons.add),
                           itemBuilder: (BuildContext context) {
-                            return foodAddPopupMenu.map((String choice) {
-                              return PopupMenuItem<String>(
-                                value: choice,
-                                child: Text(choice),
-                              );
-                            }).toList();
+                            if (foodCategories[index].courseLevel != 3) {
+                              return foodAddPopupMenu.map((String choice) {
+                                return PopupMenuItem<String>(
+                                  value: choice,
+                                  child: Text(choice),
+                                );
+                              }).toList();
+                            } else {
+                              String menuItem = foodAddPopupMenu.firstWhere(
+                                  (element) => element == 'Add Food');
+                              return <PopupMenuItem<String>>[
+                                PopupMenuItem<String>(
+                                  value: menuItem,
+                                  child: Text(menuItem),
+                                )
+                              ];
+                            }
+                          },
+                          onSelected: (String value) async {
+                            int newFoodCategory = -1;
+                            int newFoodParentCategory = -1;
+                            int newFoodCourseLevel = -1;
+
+                            switch (value) {
+                              case 'Add Food':
+                                newFoodCategory =
+                                    foodCategories[index].category;
+                                newFoodParentCategory =
+                                    foodCategories[index].parentCategory;
+                                newFoodCourseLevel =
+                                    foodCategories[index].courseLevel;
+                                break;
+                              case 'Add Food as Child':
+                                /* Get a new category index. It is basically the current amount of categories + 1 */
+                                newFoodCategory = foodCategories.length + 1;
+                                /* Set the new foods parent category to selected category. */
+                                newFoodParentCategory =
+                                    foodCategories[index].category;
+                                /* New foods course level is one level higher. 
+                                  Handling the course limit here is not needed,
+                                      since this menu option will only exist for the appropriate categories. */
+                                newFoodCourseLevel =
+                                    foodCategories[index].courseLevel + 1;
+                                break;
+                              default:
+                            }
+                            Food newFood = await newFoodDialog(context,
+                                category: newFoodCategory,
+                                parentCategory: newFoodParentCategory,
+                                courseLevel: newFoodCourseLevel);
+                            if (newFood != null) {
+                              bool success = await DatabaseProvider.instance
+                                  .createFood(client.documentID, newFood);
+
+                              if (success) {
+                                Scaffold.of(context).showSnackBar(SnackBar(
+                                  content: SnackbarContent(
+                                    icon: Icons.check,
+                                    title: Messages.foodCreateSuccess,
+                                  ),
+                                ));
+                              }
+                            }
                           },
                         ),
                       ),
@@ -549,6 +692,168 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
         }
       },
     );
+  }
+
+  Future<Food> newFoodDialog(BuildContext context,
+      {@required int category,
+      @required int parentCategory,
+      @required int courseLevel}) async {
+    TextEditingController foodNameField = TextEditingController();
+    TextEditingController dailyLimitField = TextEditingController();
+    TextEditingController weeklyLimitField = TextEditingController();
+    GlobalKey<FormState> foodFormKey = GlobalKey<FormState>();
+
+    return await showDialog<Food>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+              title: Text('Create Food'),
+              content: Form(
+                key: foodFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    TextFormField(
+                      controller: foodNameField,
+                      decoration: InputDecoration(labelText: 'Name'),
+                      validator: (String value) {
+                        if (value.isEmpty) {
+                          return 'Required';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: dailyLimitField,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: 'Daily Limit'),
+                      validator: (String value) {
+                        if (value.isEmpty) {
+                          return 'Required';
+                        } else if (!isInt(value)) {
+                          return 'Enter an integer';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: weeklyLimitField,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: 'Weekly Limit'),
+                      validator: (String value) {
+                        if (value.isEmpty) {
+                          return 'Required';
+                        } else if (!isInt(value)) {
+                          return 'Enter an integer';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop<Food>(null),
+                ),
+                FlatButton(
+                  child: Text('Create'),
+                  onPressed: () {
+                    if (foodFormKey.currentState.validate()) {
+                      Navigator.of(context).pop<Food>(Food(
+                        name: foodNameField.text,
+                        category: category,
+                        parentCategory: parentCategory,
+                        courseLevel: courseLevel,
+                        dailyLimit: int.parse(dailyLimitField.text),
+                        weeklyLimit: int.parse(weeklyLimitField.text),
+                      ));
+                    }
+                  },
+                ),
+              ],
+            ));
+  }
+
+  Future<String> changeFoodNameDialog(BuildContext context) async {
+    TextEditingController foodNameField = TextEditingController();
+    GlobalKey<FormState> foodFormKey = GlobalKey<FormState>();
+
+    return await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+              title: Text('Enter the new name'),
+              content: Form(
+                key: foodFormKey,
+                child: TextFormField(
+                  controller: foodNameField,
+                  validator: (String value) {
+                    if (value.isEmpty) {
+                      return 'Required';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop<String>(''),
+                ),
+                FlatButton(
+                  child: Text('Create'),
+                  onPressed: () {
+                    if (foodFormKey.currentState.validate()) {
+                      Navigator.of(context).pop<String>(foodNameField.text);
+                    }
+                  },
+                ),
+              ],
+            ));
+  }
+
+  Future<String> changeFoodDailyWeeklyLimitDialog(BuildContext context,
+      {@required String title}) async {
+    TextEditingController foodLimitField = TextEditingController();
+    GlobalKey<FormState> foodFormKey = GlobalKey<FormState>();
+
+    return await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+              title: Text('Enter the new $title Limit'),
+              content: Form(
+                key: foodFormKey,
+                child: TextFormField(
+                  controller: foodLimitField,
+                  keyboardType: TextInputType.number,
+                  validator: (String value) {
+                    if (value.isEmpty) {
+                      return 'Required';
+                    } else if (!isInt(value)) {
+                      return 'Enter an integer';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop<String>(''),
+                ),
+                FlatButton(
+                  child: Text('Create'),
+                  onPressed: () {
+                    if (foodFormKey.currentState.validate()) {
+                      Navigator.of(context).pop<String>(foodLimitField.text);
+                    }
+                  },
+                ),
+              ],
+            ));
   }
 
   double getFoodIndentation(int courseLevel) {

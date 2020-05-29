@@ -63,7 +63,9 @@ class DatabaseProvider {
               name: 'New Food',
               courseLevel: 1,
               category: 1,
-              parentCategory: 0));
+              parentCategory: 0,
+              dailyLimit: 1,
+              weeklyLimit: 1));
       return true;
     } on Exception catch (e) {
       debugPrint(e.toString());
