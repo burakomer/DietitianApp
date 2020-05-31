@@ -2,8 +2,9 @@ import 'package:diet_app/messages.dart';
 import 'package:diet_app/models/client_model.dart';
 import 'package:diet_app/models/food_category_model.dart';
 import 'package:diet_app/models/food_model.dart';
-import 'package:diet_app/models/plan_template.dart';
+import 'package:diet_app/models/plan_template_model.dart';
 import 'package:diet_app/providers/database_provider.dart';
+import 'package:diet_app/ui/widgets/checkbox_element.dart';
 import 'package:diet_app/ui/widgets/snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:string_validator/string_validator.dart';
@@ -44,6 +45,7 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
     'Change Name',
     'Change Daily Limit',
     'Change Weekly Limit',
+    'Change Meals',
     'Delete'
   };
   final foodAddPopupMenu = {'Add Food', 'Add Food as Child'};
@@ -115,14 +117,19 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
             );
           }),
         ],
-        bottom: TabBar(
+      ),
+      bottomNavigationBar: BottomAppBar(
+        shape: _tabController.index == 0 ? CircularNotchedRectangle() : null,
+        child: TabBar(
           controller: _tabController,
           tabs: <Widget>[
             Tab(
+              iconMargin: EdgeInsets.all(1),
               icon: Icon(Icons.assignment),
               text: 'Plans',
             ),
             Tab(
+              iconMargin: EdgeInsets.all(1),
               icon: Icon(Icons.fastfood),
               text: 'Foods',
             ),
@@ -134,6 +141,7 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
         controller: _tabController,
         children: <Widget>[getPlansTabView(context), getFoodsTabView(context)],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
@@ -449,8 +457,15 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                                               .toString() +
                                           '. ' +
                                           food.name),
-                                      subtitle: Text(
-                                          'DLimit: ${food.dailyLimit} | WLimit: ${food.weeklyLimit}'),
+                                      subtitle: Text('DLimit: ${food.dailyLimit} | WLimit: ${food.weeklyLimit}' +
+                                          '\n${food.breakfast ? 'Breakfast' : ''}' +
+                                          '${(food.breakfast && (food.lunch || food.dinner || food.snack)) ? ' ' : ''}' +
+                                          '${food.lunch ? 'Lunch' : ''}' +
+                                          '${(food.lunch && (food.dinner || food.snack)) ? ' ' : ''}' +
+                                          '${food.dinner ? 'Dinner' : ''}' +
+                                          '${(food.dinner && food.snack) ? ' ' : ''}' +
+                                          '${food.snack ? 'Snack' : ''}'),
+                                      isThreeLine: true,
                                       trailing: PopupMenuButton(
                                         itemBuilder: (BuildContext context) {
                                           return foodPopupMenu
@@ -606,6 +621,45 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                                                 });
                                               }
                                               break;
+                                            case 'Change Meals':
+                                              List<bool> newMeals =
+                                                  await changeFoodMeals(context,
+                                                      meals: <bool>[
+                                                    food.breakfast,
+                                                    food.lunch,
+                                                    food.dinner,
+                                                    food.snack
+                                                  ]);
+                                              if (newMeals != null) {
+                                                Food updatedFood = food;
+
+                                                updatedFood.breakfast =
+                                                    newMeals[0];
+                                                updatedFood.lunch = newMeals[1];
+                                                updatedFood.dinner =
+                                                    newMeals[2];
+                                                updatedFood.snack = newMeals[3];
+
+                                                bool success =
+                                                    await DatabaseProvider
+                                                        .instance
+                                                        .updateFood(updatedFood,
+                                                            clientDocumentID:
+                                                                client
+                                                                    .documentID);
+
+                                                if (!success) {
+                                                  Scaffold.of(context)
+                                                      .showSnackBar(SnackBar(
+                                                          content:
+                                                              SnackbarContent(
+                                                    icon: Icons.error,
+                                                    title: Messages
+                                                        .foodUpdateFailure,
+                                                  )));
+                                                }
+                                              }
+                                              break;
                                             default:
                                           }
                                         },
@@ -698,10 +752,15 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
       {@required int category,
       @required int parentCategory,
       @required int courseLevel}) async {
+    GlobalKey<FormState> foodFormKey = GlobalKey<FormState>();
+
     TextEditingController foodNameField = TextEditingController();
     TextEditingController dailyLimitField = TextEditingController();
     TextEditingController weeklyLimitField = TextEditingController();
-    GlobalKey<FormState> foodFormKey = GlobalKey<FormState>();
+    bool breakfast = false;
+    bool lunch = false;
+    bool dinner = false;
+    bool snack = false;
 
     return await showDialog<Food>(
         context: context,
@@ -710,8 +769,8 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
               title: Text('Create Food'),
               content: Form(
                 key: foodFormKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: ListView(
+                  shrinkWrap: true,
                   children: <Widget>[
                     TextFormField(
                       controller: foodNameField,
@@ -749,6 +808,30 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                         return null;
                       },
                     ),
+                    CheckboxElement(
+                      onChanged: (bool value) {
+                        breakfast = value;
+                      },
+                      title: Text('Breakfast'),
+                    ),
+                    CheckboxElement(
+                      onChanged: (bool value) {
+                        lunch = value;
+                      },
+                      title: Text('Lunch'),
+                    ),
+                    CheckboxElement(
+                      onChanged: (bool value) {
+                        dinner = value;
+                      },
+                      title: Text('Dinner'),
+                    ),
+                    CheckboxElement(
+                      onChanged: (bool value) {
+                        snack = value;
+                      },
+                      title: Text('Snack'),
+                    ),
                   ],
                 ),
               ),
@@ -768,6 +851,10 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                         courseLevel: courseLevel,
                         dailyLimit: int.parse(dailyLimitField.text),
                         weeklyLimit: int.parse(weeklyLimitField.text),
+                        breakfast: breakfast,
+                        lunch: lunch,
+                        dinner: dinner,
+                        snack: snack,
                       ));
                     }
                   },
@@ -856,6 +943,59 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
             ));
   }
 
+  Future<List<bool>> changeFoodMeals(BuildContext context,
+      {@required List<bool> meals}) async {
+    return await showDialog<List<bool>>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+              title: Text('Change Meals'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  CheckboxElement(
+                    value: meals[0],
+                    onChanged: (bool value) {
+                      meals[0] = value;
+                    },
+                    title: Text('Breakfast'),
+                  ),
+                  CheckboxElement(
+                    value: meals[1],
+                    onChanged: (bool value) {
+                      meals[1] = value;
+                    },
+                    title: Text('Lunch'),
+                  ),
+                  CheckboxElement(
+                    value: meals[2],
+                    onChanged: (bool value) {
+                      meals[2] = value;
+                    },
+                    title: Text('Dinner'),
+                  ),
+                  CheckboxElement(
+                    value: meals[3],
+                    onChanged: (bool value) {
+                      meals[3] = value;
+                    },
+                    title: Text('Snack'),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop<List<bool>>(null),
+                ),
+                FlatButton(
+                  child: Text('Create'),
+                  onPressed: () => Navigator.of(context).pop<List<bool>>(meals),
+                ),
+              ],
+            ));
+  }
+
   double getFoodIndentation(int courseLevel) {
     switch (courseLevel) {
       case 1:
@@ -894,10 +1034,8 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
   Widget getFAB(BuildContext context) {
     return Builder(
         builder: (context) => _tabController.index == 0
-            ? FloatingActionButton.extended(
-                label: Row(
-                  children: <Widget>[Icon(Icons.add), Text('Create Plan')],
-                ),
+            ? FloatingActionButton(
+                child: Icon(Icons.add),
                 onPressed: isCreatingPlan
                     ? () {}
                     : () async {

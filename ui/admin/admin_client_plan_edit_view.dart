@@ -1,7 +1,7 @@
 import 'package:diet_app/enums/meals_enum.dart';
 import 'package:diet_app/messages.dart';
 import 'package:diet_app/models/food_model.dart';
-import 'package:diet_app/models/plan_template.dart';
+import 'package:diet_app/models/plan_template_model.dart';
 import 'package:diet_app/providers/database_provider.dart';
 import 'package:diet_app/ui/widgets/snackbar_content.dart';
 import 'package:flutter/foundation.dart';
@@ -15,7 +15,28 @@ class AdminClientPlanEditView extends StatefulWidget {
       _AdminClientPlanEditViewState();
 }
 
-class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView> {
+class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView>
+    with SingleTickerProviderStateMixin {
+  TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this, initialIndex: 0);
+    _tabController.addListener(_handleTabIndex);
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_handleTabIndex);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _handleTabIndex() {
+    setState(() {});
+  }
+
   Color themePrimaryColor;
   final bool getLive = true;
 
@@ -56,8 +77,31 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView> {
       ),
       body: Container(
         padding: const EdgeInsets.all(12.0),
-        child: ListView(
-          children: getBodyLocal(),
+        child: TabBarView(
+          controller: _tabController,
+          children: <Widget>[
+            ListView(
+              children: getAddToPlanTabView(),
+            ),
+            getViewPlanTabView(),
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: TabBar(
+          controller: _tabController,
+          tabs: <Widget>[
+            Tab(
+              iconMargin: EdgeInsets.all(1),
+              icon: Icon(Icons.assignment_returned),
+              text: 'Add to Plan',
+            ),
+            Tab(
+              iconMargin: EdgeInsets.all(1),
+              icon: Icon(Icons.assignment),
+              text: 'View Plan',
+            ),
+          ],
         ),
       ),
     );
@@ -169,7 +213,11 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView> {
     );
   }
 
-  List<Widget> getBodyLocal() {
+  Widget getViewPlanTabView() {
+    return Container();
+  }
+
+  List<Widget> getAddToPlanTabView() {
     List<Widget> body = List<Widget>();
 
     List<Widget> course1Body;
@@ -183,7 +231,7 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView> {
         courseList: course1, onSelectedCourseChanged: (value) {
       setState(() {
         if (selectedFood2 != null) {
-          if (selectedFood2.parentCategory !=value.category) {
+          if (selectedFood2.parentCategory != value.category) {
             selectedFood2 = null;
           }
         }
@@ -210,7 +258,7 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView> {
           courseList: course2, onSelectedCourseChanged: (value) {
         setState(() {
           if (selectedFood3 != null) {
-            if (selectedFood3.parentCategory!=value.category) {
+            if (selectedFood3.parentCategory != value.category) {
               selectedFood3 = null;
             }
           }

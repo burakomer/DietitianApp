@@ -14,7 +14,7 @@ class PlanTemplate {
   /// **List<List<Foods>>:** Courses in a meal. *Snacks have 1, regular meals have 3.*
   ///
   /// **List<Foods>:** Foods in a course. Multiple can be selected to create variation.
-  Map<Meal, List<List<Food>>> planMap; // TODO: Use FoodCategory
+  Map<Meal, List<List<Food>>> planMap;
 
   PlanTemplate({this.name, this.documentID, this.clientDocumentID, this.assignedPlan: false}) {
     planMap = Map<Meal, List<List<Food>>>();
@@ -103,5 +103,9 @@ class PlanTemplate {
       }
       planMap[meal][2] = thirdCourse;
     }
+  }
+
+  void read() {
+    
   }
 }

@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diet_app/enums/meals_enum.dart';
 import 'package:diet_app/models/client_model.dart';
 import 'package:diet_app/models/food_model.dart';
-import 'package:diet_app/models/plan_template.dart';
+import 'package:diet_app/models/plan_template_model.dart';
 import 'package:flutter/foundation.dart';
 // import 'package:path_provider/path_provider.dart';
 
