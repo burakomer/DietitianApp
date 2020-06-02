@@ -15,33 +15,49 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        FocusScopeNode currentFocus = FocusScope.of(context);
-
-        if (!currentFocus.hasPrimaryFocus &&
-            currentFocus.focusedChild != null) {
-          currentFocus.focusedChild.unfocus();
-        }
-      },
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.lime,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        initialRoute: 'HomeView',
-        routes: {
-          'HomeView': (context) => HomeView(),
-          'ClientLogin': (context) => ClientLoginView(),
-          'AdminOptions': (context) => AdminOptionsView(),
-          'AdminClientSelect': (context) => AdminClientSelectView(),
-          'AdminClientAdd': (context) => AdminClientAddView(),
-          'AdminClientOptions': (context) => AdminClientOptionsView(),
-          'AdminClientPlanEdit': (context) => AdminClientPlanEditView(),
-        },
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.lime,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      initialRoute: 'HomeView',
+      routes: {
+        'HomeView': (context) => HomeView(),
+        'ClientLogin': (context) => ClientLoginView(),
+        'AdminOptions': (context) => AdminOptionsView(),
+        'AdminClientSelect': (context) => AdminClientSelectView(),
+        'AdminClientAdd': (context) => AdminClientAddView(),
+        'AdminClientOptions': (context) => AdminClientOptionsView(),
+        'AdminClientPlanEdit': (context) => AdminClientPlanEditView(),
+      },
     );
+  }
+
+  static double getFoodIndentation(int courseLevel) {
+    switch (courseLevel) {
+      case 1:
+        return 0.0;
+      case 2:
+        return 16.0;
+      case 3:
+        return 32.0;
+      default:
+        return 0.0;
+    }
+  }
+
+  static double getFoodCategoryElevation(int courseLevel) {
+    switch (courseLevel) {
+      case 1:
+        return 18.0;
+      case 2:
+        return 6.0;
+      case 3:
+        return 2.0;
+      default:
+        return 0.0;
+    }
   }
 }

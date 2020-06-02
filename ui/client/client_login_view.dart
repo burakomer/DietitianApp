@@ -31,18 +31,18 @@ class _ClientLoginViewState extends State<ClientLoginView> {
                     child: Text('Produce Plan'),
                     color: Theme.of(context).primaryColor,
                     onPressed:
-                        () {}, // Produce meal plan, save it to the database.
+                        () {}, // TODO: Produce meal plan, save it to the database.
                   ),
                 ),
                 SizedBox(
                   width: 12,
                 ),
-                Expanded(
+                Expanded( 
                   child: MaterialButton(
                     child: Text('Load Plan'),
                     color: Theme.of(context).primaryColor,
                     onPressed:
-                        () {}, // Check the database for existing plan. Retrieve it if exists.
+                        () {}, // TODO: Check the database for existing plan. Retrieve it if exists.
                   ),
                 ),
               ],

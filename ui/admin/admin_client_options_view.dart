@@ -1,3 +1,4 @@
+import 'package:diet_app/main.dart';
 import 'package:diet_app/messages.dart';
 import 'package:diet_app/models/client_model.dart';
 import 'package:diet_app/models/food_category_model.dart';
@@ -171,6 +172,10 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
             isLoadingFoods = false;
           });
         };
+
+        if (snapshot.hasError) {
+          return Text(snapshot.error.toString());
+        }
 
         if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
@@ -402,7 +407,7 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
         if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
         } else {
-          /* Before building the list, create a new list that groups foods according to their categories. */
+          /* Before building the list UI, create a new list that groups foods according to their categories. */
           List<FoodCategory> foodCategories = new List<FoodCategory>();
 
           /* First, sort the list accourding to category indexes, so that the next process works correctly. */
@@ -433,13 +438,13 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
               return Container(
                 padding: EdgeInsets.fromLTRB(
                     4 +
-                        getFoodIndentation(
+                        MyApp.getFoodIndentation(
                             foodCategories[index].foods[0].courseLevel),
                     2,
                     4,
                     2),
                 child: Card(
-                  elevation: getFoodCategoryElevation(
+                  elevation: MyApp.getFoodCategoryElevation(
                       foodCategories[index].foods[0].courseLevel),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -994,41 +999,6 @@ class _AdminClientOptionsViewState extends State<AdminClientOptionsView>
                 ),
               ],
             ));
-  }
-
-  double getFoodIndentation(int courseLevel) {
-    switch (courseLevel) {
-      case 1:
-        return 0.0;
-      case 2:
-        return 16.0;
-      case 3:
-        return 32.0;
-      default:
-        return 0.0;
-    }
-    // return SizedBox(
-    //   width: 32,
-    //   child: Center(
-    //     child: Text(
-    //       courseLevel.toString() + '.',
-    //       style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w900),
-    //     ),
-    //   ),
-    // );
-  }
-
-  double getFoodCategoryElevation(int courseLevel) {
-    switch (courseLevel) {
-      case 1:
-        return 18.0;
-      case 2:
-        return 6.0;
-      case 3:
-        return 2.0;
-      default:
-        return 0.0;
-    }
   }
 
   Widget getFAB(BuildContext context) {

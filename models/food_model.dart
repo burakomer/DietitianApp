@@ -58,7 +58,7 @@ class Food {
   
 
   bool operator ==(dynamic other) =>
-      other != null && other is Food && this.name == other.name;
+      other != null && other is Food && this.documentID == other.documentID;
 
   @override
   int get hashCode => super.hashCode;

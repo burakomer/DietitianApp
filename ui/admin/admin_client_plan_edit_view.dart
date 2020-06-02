@@ -1,5 +1,7 @@
 import 'package:diet_app/enums/meals_enum.dart';
+import 'package:diet_app/main.dart';
 import 'package:diet_app/messages.dart';
+import 'package:diet_app/models/food_category_model.dart';
 import 'package:diet_app/models/food_model.dart';
 import 'package:diet_app/models/plan_template_model.dart';
 import 'package:diet_app/providers/database_provider.dart';
@@ -76,18 +78,34 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView>
         bottom: getAppBarBottom(context),
       ),
       body: Container(
-        padding: const EdgeInsets.all(12.0),
         child: TabBarView(
           controller: _tabController,
           children: <Widget>[
-            ListView(
-              children: getAddToPlanTabView(),
+            Container(
+              padding: EdgeInsets.all(12.0),
+              child: ListView(
+                children: getAddToPlanTabView(),
+              ),
             ),
             getViewPlanTabView(),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add_box),
+        onPressed: () {
+          setState(() {
+            planTemplate.add(
+                meal: selectedMeal,
+                firstCourse: course1,
+                secondCourse: course2,
+                thirdCourse: course3);
+          });
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        shape: CircularNotchedRectangle(),
         child: TabBar(
           controller: _tabController,
           tabs: <Widget>[
@@ -179,15 +197,25 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView>
                   value: selectedMeal,
                   onChanged: (Meal value) {
                     setState(() {
-                      selectedFood1 = null;
-                      selectedFood2 = null;
-                      selectedFood3 = null;
-
-                      course1.clear();
-                      course2.clear();
-                      course3.clear();
-
                       selectedMeal = value;
+
+                      course1 = planTemplate.planMap[selectedMeal][0].toList();
+                      selectedFood1 = DatabaseProvider.instance.foods
+                          .firstWhere((Food food) => food.courseLevel == 1);
+
+                      if (planTemplate.planMap[selectedMeal].length > 1) {
+                        course2 =
+                            planTemplate.planMap[selectedMeal][1].toList();
+                        course3 =
+                            planTemplate.planMap[selectedMeal][2].toList();
+                        selectedFood2 = DatabaseProvider.instance.foods
+                            .firstWhere((Food food) =>
+                                food.parentCategory == selectedFood1.category);
+                        selectedFood3 = null;
+                      } else {
+                        course2.clear();
+                        course3.clear();
+                      }
                     });
                   },
                   selectedItemBuilder: (BuildContext context) {
@@ -214,7 +242,79 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView>
   }
 
   Widget getViewPlanTabView() {
-    return Container();
+    /* Before building the list UI, create a new list that groups foods according to their categories. */
+    List<Food> mealFoods = List<Food>();
+    List<FoodCategory> foodCategories = new List<FoodCategory>();
+
+    /* First, sort the list accourding to category indexes, so that the next process works correctly. */
+    planTemplate.planMap[selectedMeal]
+        .forEach((List<Food> course) => mealFoods.addAll(course));
+
+    mealFoods.sort((a, b) => a.category.compareTo(b.category));
+
+    mealFoods.forEach((Food food) {
+      if (foodCategories.length < food.category) {
+        /* If the category doesn't exist in the list */
+        List<Food> foods = <Food>[food];
+
+        foodCategories.add(FoodCategory(foods,
+            category: food.category,
+            parentCategory: food.parentCategory,
+            courseLevel: food.courseLevel));
+      } else {
+        /* Meaning that the category is already created */
+        foodCategories[food.category - 1].foods.add(food);
+      }
+    });
+
+    return ListView.builder(
+      itemCount: foodCategories.length,
+      itemBuilder: (BuildContext context, int index) {
+        return Container(
+          padding: EdgeInsets.fromLTRB(
+              4 +
+                  MyApp.getFoodIndentation(
+                      foodCategories[index].foods[0].courseLevel),
+              2,
+              4,
+              2),
+          child: Card(
+            elevation: MyApp.getFoodCategoryElevation(
+                foodCategories[index].foods[0].courseLevel),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Flexible(
+                    child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: foodCategories[index]
+                      .foods
+                      .map((Food food) => ListTile(
+                            title: Text(foodCategories[index]
+                                    .foods[0]
+                                    .courseLevel
+                                    .toString() +
+                                '. ' +
+                                food.name),
+                            subtitle: Text(
+                                'DLimit: ${food.dailyLimit} | WLimit: ${food.weeklyLimit}' +
+                                    '\n${food.breakfast ? 'Breakfast' : ''}' +
+                                    '${(food.breakfast && (food.lunch || food.dinner || food.snack)) ? ' ' : ''}' +
+                                    '${food.lunch ? 'Lunch' : ''}' +
+                                    '${(food.lunch && (food.dinner || food.snack)) ? ' ' : ''}' +
+                                    '${food.dinner ? 'Dinner' : ''}' +
+                                    '${(food.dinner && food.snack) ? ' ' : ''}' +
+                                    '${food.snack ? 'Snack' : ''}'),
+                            isThreeLine: true,
+                          ))
+                      .toList(),
+                ))
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   List<Widget> getAddToPlanTabView() {
@@ -309,7 +409,15 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView>
     body.add(MaterialButton(
       color: Theme.of(context).primaryColor,
       child: Text('Add Selections To Plan'),
-      onPressed: () {},
+      onPressed: () {
+        setState(() {
+          planTemplate.add(
+              meal: selectedMeal,
+              firstCourse: course1,
+              secondCourse: course2,
+              thirdCourse: course3);
+        });
+      },
     ));
 
     return body;
