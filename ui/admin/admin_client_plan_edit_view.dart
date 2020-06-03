@@ -199,19 +199,17 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView>
                     setState(() {
                       selectedMeal = value;
 
+                      selectedFood1 = null;
+                      selectedFood2 = null;
+                      selectedFood3 = null;
+
                       course1 = planTemplate.planMap[selectedMeal][0].toList();
-                      selectedFood1 = DatabaseProvider.instance.foods
-                          .firstWhere((Food food) => food.courseLevel == 1);
 
                       if (planTemplate.planMap[selectedMeal].length > 1) {
                         course2 =
                             planTemplate.planMap[selectedMeal][1].toList();
                         course3 =
                             planTemplate.planMap[selectedMeal][2].toList();
-                        selectedFood2 = DatabaseProvider.instance.foods
-                            .firstWhere((Food food) =>
-                                food.parentCategory == selectedFood1.category);
-                        selectedFood3 = null;
                       } else {
                         course2.clear();
                         course3.clear();
@@ -349,7 +347,10 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView>
       });
     });
 
-    if (selectedFood1 != null) {
+    if (selectedFood1 != null &&
+        (selectedMeal != Meal.Snack1 ||
+            selectedMeal != Meal.Snack2 ||
+            selectedMeal != Meal.Snack3)) {
       course2Body = getCourse(context,
           foodList: DatabaseProvider.instance
               .readFoodsLocal(2, selectedFood1.category, selectedMeal),
@@ -377,7 +378,10 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView>
       });
     }
 
-    if (selectedFood2 != null) {
+    if (selectedFood2 != null &&
+        (selectedMeal != Meal.Snack1 ||
+            selectedMeal != Meal.Snack2 ||
+            selectedMeal != Meal.Snack3)) {
       course3Body = getCourse(context,
           foodList: DatabaseProvider.instance
               .readFoodsLocal(3, selectedFood2.category, selectedMeal),
@@ -406,19 +410,6 @@ class _AdminClientPlanEditViewState extends State<AdminClientPlanEditView>
     if (course3Body != null) body.add(const SizedBox(height: 12.0));
     if (course3Body != null) body.addAll(course3Body);
     body.add(const SizedBox(height: 12.0));
-    body.add(MaterialButton(
-      color: Theme.of(context).primaryColor,
-      child: Text('Add Selections To Plan'),
-      onPressed: () {
-        setState(() {
-          planTemplate.add(
-              meal: selectedMeal,
-              firstCourse: course1,
-              secondCourse: course2,
-              thirdCourse: course3);
-        });
-      },
-    ));
 
     return body;
   }

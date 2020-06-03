@@ -1,13 +1,14 @@
 import 'dart:convert';
-// import 'dart:io';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diet_app/enums/meals_enum.dart';
 import 'package:diet_app/models/client_model.dart';
 import 'package:diet_app/models/food_model.dart';
+import 'package:diet_app/models/plan_model.dart';
 import 'package:diet_app/models/plan_template_model.dart';
 import 'package:flutter/foundation.dart';
-// import 'package:path_provider/path_provider.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../messages.dart';
 
@@ -18,6 +19,7 @@ class DatabaseProvider {
   final CollectionReference foodsCollection =
       Firestore.instance.collection('foods');
 
+  final String _plansPath = 'plans';
   final String _planTemplatesPath = 'planTemplates';
   final String _foodsPath = 'foods';
   final String _assignedPlanField = 'assignedPlan';
@@ -78,7 +80,7 @@ class DatabaseProvider {
       await Firestore.instance.runTransaction((transaction) async {
         DocumentSnapshot freshFoodDocSnap = await transaction
             .get(getFoodsCollectionOfClient(clientDocumentID).document());
-        
+
         await transaction.set(freshFoodDocSnap.reference, newFood.toMap());
       });
       return true;
@@ -121,8 +123,7 @@ class DatabaseProvider {
   }
 
   Future<bool> updateFood(Food updatedFood,
-      {@required String clientDocumentID,
-      bool recovery: false}) async {
+      {@required String clientDocumentID, bool recovery: false}) async {
     try {
       await Firestore.instance.runTransaction((transaction) async {
         DocumentSnapshot freshSnap = await transaction.get(
@@ -299,6 +300,25 @@ class DatabaseProvider {
     }
   }
 
+  Future<Client> getClient(int clientID) async {
+    try {
+      QuerySnapshot querySnap = await clientsCollection
+          .where('id', isEqualTo: clientID)
+          .limit(1)
+          .getDocuments();
+
+      if (querySnap.documents.length == 0) {
+        return null;
+      } else {
+        return Client.fromMap(querySnap.documents[0].data,
+            documentID: querySnap.documents[0].documentID);
+      }
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
+  }
+
   Stream<List<Client>> clientStream() {
     return clientsCollection.snapshots().map((querySnap) => querySnap.documents
         .map((docSnap) =>
@@ -404,8 +424,9 @@ class DatabaseProvider {
   Stream<List<PlanTemplate>> planTemplatesOfClientStream(
       String clientDocumentID) {
     return getPlanTemplatesCollectionOfClient(clientDocumentID).snapshots().map(
-        (querySnap) => querySnap.documents
-            .map((docSnap) => PlanTemplate.fromMap(docSnap.data,
+        (QuerySnapshot querySnap) => querySnap.documents
+            .map((DocumentSnapshot docSnap) => PlanTemplate.fromMap(
+                docSnap.data,
                 documentID: docSnap.documentID,
                 clientDocumentID: clientDocumentID))
             .toList());
@@ -416,5 +437,102 @@ class DatabaseProvider {
     return clientsCollection
         .document(clientDocumentID)
         .collection(_planTemplatesPath);
+  }
+
+  // PLAN GENERATION
+
+  Future<String> generatePlan(String clientDocumentID) async {
+    try {
+      await loadFoods(clientDocumentID);
+      await Firestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot freshPlanDocSnap = await transaction
+            .get(getPlansCollectionOfClient(clientDocumentID).document('plan'));
+
+        // if (freshPlanDocSnap.exists) {
+        //   debugPrint(Messages.planGenerationPlanExists);
+        //   await Future.error(Messages.planGenerationPlanExists);
+        // }
+
+        QuerySnapshot planTemplatesQuerySnap =
+            await getPlanTemplatesCollectionOfClient(clientDocumentID)
+                .where(_assignedPlanField, isEqualTo: true)
+                .limit(1)
+                .getDocuments();
+
+        if (planTemplatesQuerySnap.documents.length == 0) {
+          debugPrint(Messages.assignedPlanTemplateNotExists);
+          await Future.error(Messages.assignedPlanTemplateNotExists);
+        }
+
+        Plan newPlan = Plan.generate(PlanTemplate.fromMap(
+          planTemplatesQuerySnap.documents[0].data,
+          documentID: planTemplatesQuerySnap.documents[0].documentID,
+          clientDocumentID: clientDocumentID,
+        ));
+
+        await transaction.set(freshPlanDocSnap.reference, newPlan.toMap());
+
+        await savePlanLocally(newPlan);
+      });
+      return '';
+    } on String catch (e) {
+      return e;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return 'null';
+    }
+  }
+
+  Future<Plan> getPlanOfClient(String clientDocumentID) async {
+    try {
+      DocumentSnapshot freshPlanDocSnap =
+          await getPlansCollectionOfClient(clientDocumentID)
+              .document('plan')
+              .get();
+
+      if (!freshPlanDocSnap.exists) {
+        await Future<String>.error(Messages.planGenerationPlanNotExists);
+        return null;
+      }
+      return Plan.fromMap(freshPlanDocSnap.data);
+    } on String catch (e) {
+      debugPrint(e);
+      return null;
+    }
+  }
+
+  Future<bool> savePlanLocally(Plan plan) async {
+    try {
+      final directory = await getExternalStorageDirectory();
+      File planFile = File('${directory.path}/plan.json');
+
+      JsonEncoder encoder = new JsonEncoder.withIndent('  ');
+      String json = encoder.convert(plan.toMap());
+
+      await planFile.writeAsString(json);
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Future<Plan> readPlanLocally() async {
+    try {
+      final directory = await getExternalStorageDirectory();
+      debugPrint(directory.path);
+      File planFile = File('${directory.path}/plan.json');
+
+      String json = await planFile.readAsString();
+      Map<String, dynamic> map = jsonDecode(json);
+      return Plan.fromMap(map);
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
+  }
+
+  CollectionReference getPlansCollectionOfClient(String clientDocumentID) {
+    return clientsCollection.document(clientDocumentID).collection(_plansPath);
   }
 }

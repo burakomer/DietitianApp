@@ -1,67 +1,4 @@
-import 'package:flutter/foundation.dart';
-
-class Food {
-  String documentID;
-
-  String name;
-  int courseLevel;
-  int category;
-  int parentCategory;
-  int dailyLimit;
-  int weeklyLimit;
-
-  bool snack;
-  bool breakfast;
-  bool lunch;
-  bool dinner;
-
-  Food(
-      {@required this.name,
-      @required this.courseLevel,
-      @required this.category,
-      @required this.parentCategory,
-      @required this.dailyLimit,
-      @required this.weeklyLimit,
-      this.snack: false,
-      this.breakfast: false,
-      this.lunch: false,
-      this.dinner: false});
-
-  Food.fromMap(Map<String, dynamic> map, {@required documentID})
-      : this.name = map['name'],
-        this.courseLevel = map['courseLevel'],
-        this.category = map['category'],
-        this.parentCategory = map['parentCategory'],
-        this.snack = map['snack'],
-        this.breakfast = map['breakfast'],
-        this.lunch = map['lunch'],
-        this.dinner = map['dinner'],
-        this.dailyLimit = map['dailyLimit'],
-        this.weeklyLimit = map['weeklyLimit'],
-        this.documentID = documentID;
-
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'courseLevel': courseLevel,
-      'category': category,
-      'parentCategory': parentCategory,
-      'dailyLimit': dailyLimit,
-      'weeklyLimit': weeklyLimit,
-      'snack': snack,
-      'breakfast': breakfast,
-      'lunch': lunch,
-      'dinner': dinner,
-    };
-  }
-
-  bool operator ==(dynamic other) =>
-      other != null && other is Food && this.documentID == other.documentID;
-
-  @override
-  int get hashCode => super.hashCode;
-
-  static final String foodList = '''{
+{
     "foods": [
         {
             "name": "Köfteler",
@@ -496,5 +433,4 @@ class Food {
             "weeklyLimit": 14
         }
     ]
-}''';
 }

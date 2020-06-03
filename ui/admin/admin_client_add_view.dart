@@ -25,49 +25,52 @@ class _AdminClientAddViewState extends State<AdminClientAddView> {
       appBar: AppBar(
         title: Text('Add New Client'),
       ),
-      body: Builder(builder: (context) => getBody(context)),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: Icon(Icons.person_add),
-        label: Text('Create'),
-        onPressed: () async {
-          if (_clientFormKey.currentState.validate()) {
-            setState(() {
-              isBusy = true;
-            });
+      body: getBody(context),
+      floatingActionButton: Builder(
+        builder: (context) => FloatingActionButton.extended(
+          icon: Icon(Icons.person_add),
+          label: Text('Create'),
+          onPressed: () async {
+            if (_clientFormKey.currentState.validate()) {
+              setState(() {
+                isBusy = true;
+              });
 
-            bool success = await DatabaseProvider.instance.createClient(Client(
-                name: _clientNameForm.text,
-                surname: _clientSurnameForm.text,
-                id: int.parse(_clientIDForm.text)));
-            if (success) {
-              Scaffold.of(context).showSnackBar(SnackBar(
-                  content: Row(
-                children: <Widget>[
-                  Icon(Icons.check),
-                  SizedBox(
-                    width: 8.0,
-                  ),
-                  Text('Successfully added client'),
-                ],
-              )));
-            } else {
-              Scaffold.of(context).showSnackBar(SnackBar(
-                  content: Row(
-                children: <Widget>[
-                  Icon(Icons.error),
-                  SizedBox(
-                    width: 8.0,
-                  ),
-                  Text('Error adding client'),
-                ],
-              )));
+              bool success = await DatabaseProvider.instance.createClient(
+                  Client(
+                      name: _clientNameForm.text,
+                      surname: _clientSurnameForm.text,
+                      id: int.parse(_clientIDForm.text)));
+              if (success) {
+                Scaffold.of(context).showSnackBar(SnackBar(
+                    content: Row(
+                  children: <Widget>[
+                    Icon(Icons.check),
+                    SizedBox(
+                      width: 8.0,
+                    ),
+                    Text('Successfully added client'),
+                  ],
+                )));
+              } else {
+                Scaffold.of(context).showSnackBar(SnackBar(
+                    content: Row(
+                  children: <Widget>[
+                    Icon(Icons.error),
+                    SizedBox(
+                      width: 8.0,
+                    ),
+                    Text('Error adding client'),
+                  ],
+                )));
+              }
+
+              setState(() {
+                isBusy = false;
+              });
             }
-
-            setState(() {
-              isBusy = false;
-            });
-          }
-        },
+          },
+        ),
       ),
     );
   }

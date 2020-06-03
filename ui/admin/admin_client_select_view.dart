@@ -1,5 +1,7 @@
+import 'package:diet_app/messages.dart';
 import 'package:diet_app/models/client_model.dart';
 import 'package:diet_app/providers/database_provider.dart';
+import 'package:diet_app/ui/widgets/snackbar_content.dart';
 import 'package:flutter/material.dart';
 
 class AdminClientSelectView extends StatefulWidget {
@@ -28,6 +30,9 @@ class _AdminClientSelectViewState extends State<AdminClientSelectView> {
                       icon: Icon(Icons.close),
                       onPressed: () => _clientSearchField.clear(),
                     )),
+                onChanged: (String value) {
+                  // Search
+                },
               ),
         actions: <Widget>[
           IconButton(
@@ -58,9 +63,19 @@ class _AdminClientSelectViewState extends State<AdminClientSelectView> {
                 leading: Icon(Icons.person),
                 title: Text(snapshot.data[index].fullName),
                 subtitle: Text('TC ID: ' + snapshot.data[index].id.toString()),
-                onTap: () => Navigator.of(context).pushNamed(
-                    'AdminClientOptions',
-                    arguments: snapshot.data[index]),
+                onTap: () async {
+                  bool success = await DatabaseProvider.instance
+                      .loadFoods(snapshot.data[index].documentID);
+                  if (success) {
+                    Navigator.of(context).pushNamed('AdminClientOptions',
+                        arguments: snapshot.data[index]);
+                  } else {
+                    Scaffold.of(context).showSnackBar(SnackBar(
+                      content: SnackbarContent(
+                          icon: Icons.error, title: Messages.foodsLoadFailure),
+                    ));
+                  }
+                },
               );
             },
           );

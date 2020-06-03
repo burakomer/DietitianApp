@@ -19,6 +19,8 @@ class Messages {
   static const String planTemplateAssignmentFailure =
       "Error on assigning plan.";
   static const String planTemplateDeleteFailure = "Error on deleting plan.";
+  static const String assignedPlanTemplateNotExists =
+      "There is no assigned plan.";
 
   static const String foodsLoadFailure = "Error on loading foods.";
   static const String foodsInitializeFailure = 'Error on initializing food.';
@@ -29,7 +31,21 @@ class Messages {
   static const String foodUpdateFailure = "Error on updating food.";
 
   static const String clientExists = "Client already exists!";
-  static const String clientFoodCategoryLoadFailure = "Error on loading food categories.";
+  static const String clientNotExists = "Client doesn't exist.";
+  static const String clientFoodCategoryLoadFailure =
+      "Error on loading food categories.";
+
+  static const String planGenerationSuccess = "Successfully produced a plan.";
+  static const String planGenerationPlanExists =
+      "Plan already generated! Load the plan instead.";
+  static const String planGenerationPlanNotExists =
+      "Plan not generated! Please generate the plan.";
+
+  static String planGenerationFoodIsNull(int parentCategory) {
+    return "Couldn't find suitable food in parentCategory: " +
+        parentCategory.toString() +
+        ".";
+  }
 
   static String deletedMessage(String objectName) {
     return objectName + ' deleted.';
