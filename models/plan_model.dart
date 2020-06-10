@@ -5,7 +5,6 @@ import 'package:diet_app/models/food_model.dart';
 import 'package:diet_app/models/plan_template_model.dart';
 import 'package:diet_app/providers/database_provider.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 
 class Plan {
   /// **Meal:** [Meal] value.
@@ -115,7 +114,7 @@ class Plan {
               planMap[day][meal] = finalCourses.toList();
             }
           });
-        } on Exception catch (e) {
+        } on Exception {
           rethrow;
         }
       });
